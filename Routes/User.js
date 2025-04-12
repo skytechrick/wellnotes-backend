@@ -5,7 +5,6 @@ module.exports = User;
 const {Users}  = require("../Models.js");
 require("dotenv").config();
 
-const admin = require("./google.js")
 function isValidEmail(mail) {
     const a = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return a.test(mail);
@@ -86,131 +85,129 @@ User.get("/", (req, res) => {
 
 // Authenticate user
 User.post("/auth", async (req, res) => {
-    async function main(Email, Name, Profile) {
+    async function main(userId) {
  
-        if (Email) {
-            Email = Email.toLowerCase();
-            if(isValidEmail(Email)){
-                let data = await Users.findOne({Email: Email});
+        if (userId) {
+            let data = await Users.findOne({_id: userId});
                 // If User exists
-                if (data) {
-                    const Token = Create_Authentication_Token();
-                    const Auth = Create_JWT_Token({
-                        Token: Token,
-                        ID: data._id,                    
-                    });
-                    await Users.updateOne({Email: Email}, {$set: {
-                        "Authentication.Token": Token,
-                        "Authentication.Date": new Date()
-                    }}).then(()=>{
-                        return res.status(200).json({
-                            Status: "Success",
-                            Token: Auth,
-                            Message: "User authenticated",
-                        });
-                    }).catch(()=>{
-                        return res.status(500).json({
-                            Status: "Error",
-                            Message: "Internal server errors",
-                        });
-                    });
-                }else{ 
-                    // If user does not exist
-                    const Token = Create_Authentication_Token();
-                    let ID = "";
-                    while (true){
-                        ID = Profile_ID();
-                        const check = await Users.findOne({_id: ID});
-                        if (!check) {
-                            break;
-                        };
-                    };
-                    const Auth = Create_JWT_Token({
-                        Token: Token,
-                        ID: ID
-                    }); 
-                    const New_User = new Users({
-                        _id: ID,
-                        Email: Email,
-                        Authentication:{
-                            Token: Token,
-                            Date: new Date(),
-                        },
-                        Name,
-                        Profile,
-                        Journals: [],
-                        Tokens_Earned: 0,
-                        createdAt: new Date(),
-                    });
-                    await New_User.save().then(()=>{
-                        
-                        return res.status(200).json({
-                            Status: "Success",
-                            Token: Auth,
-                            Message: "User created",
-                        });
-                    }).catch(e=>{
-                        return res.status(500).json({
-                            Status: "Error",
-                            Message: "Internal server error",
-                        });
-                    });
-                };
-            }else{
-                return res.status(400).json({
-                    Status: "Error",
-                    Message: "Invalid email",
+            if (data) {
+                const Token = Create_Authentication_Token();
+                const Auth = Create_JWT_Token({
+                    Token: Token,
+                    ID: data._id,                    
                 });
-            };
-        }else{
-            return res.status(400).json({
-                Status: "Error",
-                Message: "Email Required",
-            });
-        };
-    };
-    
-    (async () => {
-        try {
-            const token = req.body.token;
-            
-            if (!token) {
-                return res.status(400).json({
-                    Status: "Error",
-                    Message: "Token is required",
+                await Users.updateOne({_id: userId}, {$set: {
+                    "Authentication.Token": Token,
+                    "Authentication.Date": new Date()
+                }}).then(()=>{
+                    return res.status(200).json({
+                        Status: "Success",
+                        token: Auth,
+                        Message: "User authenticated",
+                    });
+                }).catch(()=>{
+                    return res.status(500).json({
+                        Status: "Error",
+                        Message: "Internal server errors",
+                    });
                 });
-            };
-            
-            let decodedToken;
-            try {
-                decodedToken = await admin.auth().verifyIdToken(token);
-                
-                if (!decodedToken) {
-                    return res.status(401).send({ message: 'Authentication failed' });
-                };
-                await main(decodedToken.email, decodedToken.name, decodedToken.picture).catch(error => {
+            }else{ 
+                // // If user does not exist
+                // const Token = Create_Authentication_Token();
+                // let ID = "";
+                // while (true){
+                //     ID = Profile_ID();
+                //     const check = await Users.findOne({_id: ID});
+                //     if (!check) {
+                //         break;
+                //     };
+                // };
+                const Auth = Create_JWT_Token({
+                    Token: Token,
+                    ID: userId
+                }); 
+                const New_User = new Users({
+                    _id: userId,
+                    Authentication:{
+                        Token: Token,
+                        Date: new Date(),
+                    },
+                    Name,
+                    Profile,
+                    Journals: [],
+                    Tokens_Earned: 0,
+                    createdAt: new Date(),
+                });
+                await New_User.save().then(()=>{
+                    
+                    return res.status(200).json({
+                        Status: "Success",
+                        Message: "User created",
+                        token: Auth,
+                    });
+                }).catch(e=>{
                     return res.status(500).json({
                         Status: "Error",
                         Message: "Internal server error",
                     });
                 });
-
-            } catch (error) {
-                return res.status(401).send({ message: 'Authentication failed' });
             };
-
-        } catch (error) {
-            return res.status(500).json({
+        
+        }else{
+            return res.status(400).json({
                 Status: "Error",
-                Message: "Internal server error",
+                Message: "UserId Required",
             });
-        }
-    })();
+        };
+    };
+    await main(req.body.userId).catch(e=>{
+        return res.status(500).json({
+            Status: "Error",
+            Message: "Internal server error",
+        });
+    })
+    
+    // (async () => {
+    //     try {
+    //         const token = req.body.token;
+            
+    //         if (!token) {
+    //             return res.status(400).json({
+    //                 Status: "Error",
+    //                 Message: "Token is required",
+    //             });
+    //         };
+            
+    //         let decodedToken;
+    //         try {
+    //             decodedToken = await admin.auth().verifyIdToken(token);
+                
+    //             if (!decodedToken) {
+    //                 return res.status(401).send({ message: 'Authentication failed' });
+    //             };
+    //             await main(decodedToken.email, decodedToken.name, decodedToken.picture).catch(error => {
+    //                 return res.status(500).json({
+    //                     Status: "Error",
+    //                     Message: "Internal server error",
+    //                 });
+    //             });
+
+    //         } catch (error) {
+    //             return res.status(401).send({ message: 'Authentication failed' });
+    //         };
+
+    //     } catch (error) {
+    //         return res.status(500).json({
+    //             Status: "Error",
+    //             Message: "Internal server error",
+    //         });
+    //     }
+    // })();
 });
 // Create a new Journal
 User.post("/new_journal", async (req, res) => {
     async function main(CheckedUser) {
-        const {Title, Description, Token} = req.body;
+        const {Title, Description} = req.body;
         // console.log(req.body);
         // console.log(Title);
         // console.log(Description);
@@ -226,7 +223,7 @@ User.post("/new_journal", async (req, res) => {
                     };
                     let New_Journal = CheckedUser.Journals;
                     New_Journal.push(Journal);
-                    await Users.updateOne({Email: CheckedUser.Email}, {
+                    await Users.updateOne({_id: CheckedUser._id}, {
                         Journals: New_Journal,
                         Tokens_Earned: CheckedUser.Tokens_Earned+1
                     }).then(()=>{
@@ -420,7 +417,7 @@ User.post("/profile", async (req, res) => {
 User.post("/logout", async (req, res) => {
     async function main(CheckedUser){
 
-        await Users.updateOne({Email: CheckedUser.Email}, {
+        await Users.updateOne({_id: CheckedUser._id}, {
             $set: {
                 "Authentication.Token": "",
                 "Authentication.Date": new Date()
@@ -467,7 +464,7 @@ User.post("/journal/delete/:id", async (req, res) => {
             };
         };
         if(found){
-            await Users.updateOne({Email: CheckedUser.Email}, {
+            await Users.updateOne({_id: CheckedUser._id}, {
                 Journals: New_Journals,
             }).then(()=>{
                 return res.status(200).json({

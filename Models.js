@@ -24,11 +24,11 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    Email:{
-        type: String,
-        required: true,
-        lowercase: true,
-    },
+    // Email:{
+    //     type: String,
+    //     required: true,
+    //     lowercase: true,
+    // },
     Name:{
         type: String,
         default: "",
