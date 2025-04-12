@@ -3,7 +3,6 @@ const Model = require('../Models.js');
 const createGroup = async (req, res) => {
     try {
         const user = req.user;
-        console.log(user);
 
         const { name , duration , stakeAmount , maximumMember, mininumMember } = req.body;
 
@@ -99,7 +98,7 @@ const getAllUsersGroups = async (req, res) => {
         }
         );
 
-        console.log(members);
+        // console.log(members);
 
         if (!members) {
             return res.status(404).json({

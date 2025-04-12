@@ -226,7 +226,19 @@ User.post("/new_journal", async (req, res) => {
                     };
                     let New_Journal = CheckedUser.Journals;
                     New_Journal.push(Journal);
+
+                    let currentStrike = CheckedUser.strike;
+
+                    const currentCheck = new Date().toISOString().split('T')[0]
+                    
+                    const lastCheck = CheckedUser.lastStrike;
+                    if (new Date(lastCheck) > new Date(currentCheck)) {
+                        currentStrike = 0;
+                    }
+
                     await Users.updateOne({_id: CheckedUser._id}, {
+                        strike: currentStrike+1,
+                        lastStrike: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                         Journals: New_Journal,
                         Tokens_Earned: CheckedUser.Tokens_Earned+1
                     }).then(()=>{

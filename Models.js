@@ -51,6 +51,14 @@ const userSchema = new Schema({
         type: Number,
         required: true
     },
+    strike: {
+        type: Number,
+        default: 0
+    },
+    lastStrike: {
+        type: String,
+        default: ""
+    },
     Journals:[
         {
             _id : false,
