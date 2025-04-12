@@ -85,7 +85,11 @@ const getAllGroups = async (req, res) => {
 const getAllUsersGroups = async (req, res) => {
     try {
         const user = req.user;
-        const groups = await Model.group.find({status: "active"}).populate("userId").exec();
+        const groups = await Model.group.find({
+            status: {
+                $in: ["waiting", "active"]
+            }
+        }).populate("userId").exec();
         
 
         const members = groups.filter((group) => {
@@ -94,6 +98,9 @@ const getAllUsersGroups = async (req, res) => {
             return isMember;
         }
         );
+
+        console.log(members);
+
         if (!members) {
             return res.status(404).json({
                 status: "error",
@@ -110,7 +117,7 @@ const getAllUsersGroups = async (req, res) => {
         res.status(200).json({
             status: "success",
             message: "Groups fetched successfully",
-            groups
+            groups: members,
         });
     } catch (err) {
         console.error(err);
@@ -204,9 +211,58 @@ const joinAGroup = async (req, res) => {
     }
 };
 
+const activeGroup = async (req, res) => {
+    try {
+
+        const user = req.user;
+        const { groupId } = req.body;
+
+        if (!groupId) {
+            return res.status(400).json({
+                status: "error",
+                message: "Please provide groupId"
+            });
+        }
+
+        const isExist = await Model.group.findOne({
+            _id: groupId,
+            userId: user._id,
+            status: "waiting",
+        });
+
+        if (!isExist) {
+            return res.status(404).json({
+                status: "error",
+                message: "Group with status waiting created by you is not found"
+            });
+        }
+
+        const updatedGroup = await Model.group.findByIdAndUpdate(
+            groupId,
+            {
+                status: "active",
+            },
+            { new: true }
+        );
+
+        res.status(200).json({
+            status: "success",
+            message: "Group activated successfully",
+            group: updatedGroup
+        });
+        
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            message: "Internal server error"
+        });
+    }
+}
+
 module.exports = {
     createGroup,
     getAllGroups,
     getAllUsersGroups,
     joinAGroup,
+    activeGroup,
 }
