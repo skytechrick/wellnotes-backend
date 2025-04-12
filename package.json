@@ -1,0 +1,22 @@
+{
+  "name": "journal",
+  "version": "1.0.0",
+  "description": "Posting journal.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "debug": "node --inspect-brk index.js"
+  },
+  "author": "SKY TECH - RICK",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "firebase-admin": "^13.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.7.1"
+  }
+}
