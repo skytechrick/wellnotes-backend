@@ -541,4 +541,5 @@ const checkUserMiddleware = async (req, res, next) => {
 
 User.post("/group/create", checkUserMiddleware , group.createGroup);
 User.post("/group/all", checkUserMiddleware , group.getAllGroups);
-
+User.post("/group/users", checkUserMiddleware , group.getAllUsersGroups);
+User.post("/group/join", checkUserMiddleware , group.joinAGroup);
