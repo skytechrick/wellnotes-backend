@@ -9,10 +9,18 @@ dotenv.config();
 const Port = process.env.Port;
 // 'http://localhost:3000', 'http://localhost:5173',
 const corsOptions = {
-    origin: ['https://wellnotes1-00.vercel.app', 'http://localhost:5173', 'https://zipbuy.in'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true,
+    // origin: ["*"],
+    // // origin: ['https://wellnotes1-00.vercel.app', 'http://localhost:5173', 'https://zipbuy.in'],
+
+    
+    // methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    // allowedHeaders: ['Content-Type'],
+    // credentials: true,
+    // preflightContinue: false,
+    // optionsSuccessStatus: 204,
+    // maxAge: 60,
+    // exposedHeaders: ['Content-Disposition'],
+    
 };
 
 

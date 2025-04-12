@@ -24,11 +24,12 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    // Email:{
-    //     type: String,
-    //     required: true,
-    //     lowercase: true,
-    // },
+    Email:{
+        type: String,
+        required: false,
+        lowercase: true,
+        trim: true,
+    },
     Name:{
         type: String,
         default: "",
@@ -75,10 +76,64 @@ const userSchema = new Schema({
         type: Date,
         default: Date()
     },
+    groups:[
+        {
+            type: String,
+            required: true,
+            ref: 'group'
+        }
+    ],
+});
+
+const groupSchema = new Schema({
+    status: {
+        type: String,
+        default: "waiting"
+    },
+    userId: {
+        type: String,
+        required: true,
+        ref: 'Users'
+    },
+    name:{
+        type: String,
+        required: true,
+        unique: true
+    },
+    duration: {
+        type: Number,
+        required: true
+    },
+    stakeAmount: {
+        type: Number,
+        required: true
+    },
+    members:[
+        {
+            type: String,
+            required: true,
+            ref: 'Users'
+        }
+    ],
+    maximumMember: {
+        type: Number,
+        required: true
+    },
+    mininumMember: {
+        type: Number,
+        required: true
+    },
+    createdAt:{
+        type: Date,
+        default: Date()
+    },
+    
 });
 
 const Users = Model('Users', userSchema);
+const group = Model('group', groupSchema);
 
 module.exports = {
-    Users:Users
+    Users:Users,
+    group
 };

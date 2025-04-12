@@ -5,6 +5,8 @@ module.exports = User;
 const {Users}  = require("../Models.js");
 require("dotenv").config();
 
+const group = require("../controller/group.js");
+
 function isValidEmail(mail) {
     const a = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return a.test(mail);
@@ -38,7 +40,7 @@ function Verify_JWT_Token(Token){
     try{
         const decoded = jwt.verify(Token, process.env.JWT_Secret, opt);
         return decoded;
-    }catch{
+    }catch (e){
         return null;
     };
 };
@@ -55,7 +57,9 @@ const ValidToken = async Token =>{
     try{
         if(Token){
             let a = Verify_JWT_Token(Token);
-            // console.log(a);
+
+            
+            
             a = a.payload;
             if(a){
                 let GetUser = await Users.findOne({_id: a.ID});
@@ -113,7 +117,7 @@ User.post("/auth", async (req, res) => {
                 });
             }else{ 
                 // // If user does not exist
-                // const Token = Create_Authentication_Token();
+                const Token = Create_Authentication_Token();
                 // let ID = "";
                 // while (true){
                 //     ID = Profile_ID();
@@ -132,8 +136,7 @@ User.post("/auth", async (req, res) => {
                         Token: Token,
                         Date: new Date(),
                     },
-                    Name,
-                    Profile,
+                    
                     Journals: [],
                     Tokens_Earned: 0,
                     createdAt: new Date(),
@@ -506,3 +509,36 @@ User.get("*", (req, res) => {
         Message: "Route not found",
     });
 });
+
+
+
+const checkUserMiddleware = async (req, res, next) => {
+    try {
+
+        if (!req.body.Token) {
+            return res.status(400).json({
+                Status: "Error",
+                Message: "Token is required",
+            });
+        }
+        const user = await ValidToken(req.body.Token);
+        if(!user) {
+            return res.status(403).json({
+                Status: "Error",
+                Message: "Unauthorized access, please login and try again later.",
+            });
+        }
+        
+        req.user = user;
+        next();
+    } catch (error) {
+        return res.status(500).json({
+            Status: "Error",
+            message: "Internal server error",
+        });
+    }
+}
+
+User.post("/group/create", checkUserMiddleware , group.createGroup);
+User.post("/group/all", checkUserMiddleware , group.getAllGroups);
+
