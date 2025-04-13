@@ -236,6 +236,7 @@ User.post("/new_journal", async (req, res) => {
                     // console.log(new Date(lastCheck),"_____" , new Date(currentCheck));
                     // console.log(new Date(lastCheck).getTime() === new Date(currentCheck).getTime());
 
+                    let q = CheckedUser.redeemStrike;
                     if (new Date(lastCheck).getTime() === new Date(currentCheck).getTime()) {
                         currentStrike = CheckedUser.strike;
 
@@ -249,6 +250,11 @@ User.post("/new_journal", async (req, res) => {
                             currentStrike = CheckedUser.strike-1;
                         }else{
                             currentStrike = 0;
+                            
+                            q = {
+                                email: false,
+                                wallet: false,
+                            }
                         }
                     }else{
                         currentStrike = CheckedUser.strike-1;
@@ -258,6 +264,7 @@ User.post("/new_journal", async (req, res) => {
                         strike: currentStrike+1,
                         lastStrike: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                         Journals: New_Journal,
+                        redeemStrike: q,
                         Tokens_Earned: CheckedUser.Tokens_Earned+1
                     }).then(()=>{
                         return res.status(200).json({
@@ -575,3 +582,4 @@ User.post("/group/users", checkUserMiddleware , group.getAllUsersGroups);
 User.post("/group/active", checkUserMiddleware , group.activeGroup);
 User.post("/group/join", checkUserMiddleware , group.joinAGroup);
 User.delete("/group/end", checkUserMiddleware , group.endGroup);
+User.patch("/user/redeem", checkUserMiddleware , group.redeem);

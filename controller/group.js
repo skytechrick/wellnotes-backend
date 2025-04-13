@@ -4,7 +4,7 @@ const createGroup = async (req, res) => {
     try {
         const user = req.user;
 
-        const { name , duration , stakeAmount , maximumMember, mininumMember } = req.body;
+        const { name, duration, stakeAmount, maximumMember, mininumMember } = req.body;
 
         if (!name || !duration || !stakeAmount || !maximumMember || !mininumMember) {
             return res.status(400).json({
@@ -13,7 +13,7 @@ const createGroup = async (req, res) => {
             });
         }
 
-        const isExist = await Model.group.exists({name});
+        const isExist = await Model.group.exists({ name });
         if (isExist) {
             return res.status(400).json({
                 status: "error",
@@ -59,8 +59,8 @@ const createGroup = async (req, res) => {
 const getAllGroups = async (req, res) => {
     try {
         const user = req.user;
-        const groups = await Model.group.find({status: "waiting"}).populate("userId").exec();
-        
+        const groups = await Model.group.find({ status: "waiting" }).populate("userId").exec();
+
         if (!groups) {
             return res.status(404).json({
                 status: "error",
@@ -89,7 +89,7 @@ const getAllUsersGroups = async (req, res) => {
                 $in: ["waiting", "active"]
             }
         }).populate("userId").exec();
-        
+
 
         const members = groups.filter((group) => {
             const allMembers = group.members;
@@ -109,20 +109,20 @@ const getAllUsersGroups = async (req, res) => {
 
         const currentDate = new Date();
         const A = [];
-        
-        members.forEach(group => {
-            
 
-            if(group.status === "active") {
+        members.forEach(group => {
+
+
+            if (group.status === "active") {
                 // console.log(group);
 
                 const d = new Date(currentDate).toISOString().split('T')[0];
-                
+
                 const t = new Date(group.startingDate).toISOString().split('T')[0];
-                
-                const dateDiff = ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24)) === 0? 1 : ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24));
-                
-                
+
+                const dateDiff = ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24)) === 0 ? 1 : ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24));
+
+
                 // group.groupStrike = dateDiff>= currentStrike? currentStrike: dateDiff;
                 // group.totalDays = dateDiff;
 
@@ -131,7 +131,7 @@ const getAllUsersGroups = async (req, res) => {
                     groupStrike: currentStrike > 0 ? Math.min(currentStrike, dateDiff) : 0,
                     totalDays: dateDiff
                 })
-                
+
 
                 /* 
 
@@ -158,7 +158,7 @@ const getAllUsersGroups = async (req, res) => {
                 
                 */
 
-            }else{
+            } else {
 
                 A.push({
                     ...group.toObject?.() ?? group,
@@ -166,13 +166,13 @@ const getAllUsersGroups = async (req, res) => {
                     totalDays: 0
                 });
             }
-            
+
         })
-        
 
 
-        
-        
+
+
+
 
         if (!groups) {
             return res.status(404).json({
@@ -220,7 +220,7 @@ const joinAGroup = async (req, res) => {
         }
 
         const allMembers = isExist.members;
-        
+
         const maximumMember = isExist.maximumMember;
         const currentMember = allMembers.length;
         if (currentMember >= maximumMember) {
@@ -317,7 +317,7 @@ const activeGroup = async (req, res) => {
             message: "Group activated successfully",
             group: updatedGroup
         });
-        
+
     } catch (error) {
         return res.status(500).json({
             status: "error",
@@ -350,11 +350,11 @@ const endGroup = async (req, res) => {
                 message: "Group with status active created by you is not found"
             });
         }
-    
+
         const group = isExist;
 
-        if(group.status !== "active") {
-            
+        if (group.status !== "active") {
+
             return res.status(400).json({
                 status: "error",
                 message: "Group is not active"
@@ -362,39 +362,39 @@ const endGroup = async (req, res) => {
         }
 
         const d = new Date().toISOString().split('T')[0];
-        
+
         const t = new Date(group.startingDate).toISOString().split('T')[0];
-        
-        const dateDiff = ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24)) === 0? 1 : ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24));
-        
+
+        const dateDiff = ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24)) === 0 ? 1 : ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24));
+
         console.log(dateDiff)
-        
+
         // group.groupStrike = dateDiff>= currentStrike? currentStrike: dateDiff;
         // group.totalDays = dateDiff;
 
 
         const allMembers = group.members;
 
-    
-        
+
+
 
         let gt = [];
 
 
         // console.log(allMembers);
 
-        allMembers.forEach( member => {
+        allMembers.forEach(member => {
 
             const user = member._id;
             const userStrike = member.strike;
 
-            if(userStrike > 0) {
+            if (userStrike > 0) {
                 const userGroupStrike = Math.min(userStrike, dateDiff);
                 gt.push({
                     ...member.toObject?.() ?? member,
                     userGroupStrike,
                 });
-            }else{
+            } else {
                 gt.push({
                     ...member,
                     userGroupStrike: 0,
@@ -403,31 +403,31 @@ const endGroup = async (req, res) => {
 
         });
 
-        
+
         let sortedMembers = gt.sort((a, b) => {
             return b.userGroupStrike - a.userGroupStrike;
         });
 
         // console.log(sortedMembers);
-        
-        
-        
+
+
+
         let winners = [];
         let strikeRanks = new Set();
-        
+
         for (let member of sortedMembers) {
-            
+
             strikeRanks.add(member.userGroupStrike);
-            
+
             winners.push(member);
-            
+
             if (strikeRanks.size === 3) break;
         }
-        
-        
+
+
         const totalMembers = sortedMembers.length;
         const totalAmount = group.stakeAmount * totalMembers;
-        
+
         const totalWinners = winners.length;
         const totalWinnersAmount = totalAmount / totalWinners;
 
@@ -483,6 +483,82 @@ const endGroup = async (req, res) => {
     }
 }
 
+const redeem = async (req, res) => {
+    try {
+
+        const user = req.user;
+
+        const strike = user.strike;
+
+        if (strike < 7) {
+            return res.status(400).json({
+                status: "error",
+                message: "You need to have at least 7 days of strike to redeem"
+            });
+        }
+
+        const chain = "solana";
+        const env = "staging";
+        let recipient = "";
+
+        if(req.body.email && user.redeemStrike.email === false){
+            recipientAddress = `email:${recipientEmail}:${chain}`;
+            user.redeemStrike.email = true;
+        }else if( req.body.walletAddress && user.redeemStrike.wallet === false){
+            user.redeemStrike.wallet = true;
+            
+            recipient = `${chain}:${recipientWallet}`;
+
+        }else{
+            return res.status(400).json({
+                status: "error",
+                message: "Please provide either email or wallet address where you have not redeemed yet"
+            });
+        }
+
+        const apiKey = process.env.CROSSMINT_API_KEY;
+
+        const url = `https://${env}.crossmint.com/api/2022-06-09/collections/default/nfts`;
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                accept: "application/json",
+                "content-type": "application/json",
+                "x-api-key": apiKey,
+            },
+            body: JSON.stringify({
+                recipient,
+                metadata: {
+                    name: "Crossmint Test NFT",
+                    image: "https://picsum.photos/400",
+                    description: "My first NFT using Crossmint",
+                },
+            }),
+        }).then((res) => {
+            return res.json();
+        }).then(async(json) => {
+            await user.save();
+            return res.status(200).json({
+                status: "success",
+                message: "NFT minted successfully",
+                data: json
+            });
+        }).catch((err) =>{
+              return res.status(500).json({
+                status: "error",
+                message: "Internal server error"
+            })
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            message: "Internal server error"
+        });
+    }
+}
+
 module.exports = {
     createGroup,
     getAllGroups,
@@ -490,4 +566,5 @@ module.exports = {
     joinAGroup,
     activeGroup,
     endGroup,
+    redeem,
 }

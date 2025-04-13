@@ -55,6 +55,16 @@ const userSchema = new Schema({
         type: Number,
         default: 0
     },
+    redeemStrike: {
+        email: {
+            type: Boolean,
+            default: false
+        },
+        wallet: {
+            type: Boolean,
+            default: false
+        },
+    },
     lastStrike: {
         type: String,
         default: ""
