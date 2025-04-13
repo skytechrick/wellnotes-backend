@@ -580,6 +580,7 @@ User.post("/group/create", checkUserMiddleware , group.createGroup);
 User.post("/group/all", checkUserMiddleware , group.getAllGroups);
 User.post("/group/users", checkUserMiddleware , group.getAllUsersGroups);
 User.post("/group/active", checkUserMiddleware , group.activeGroup);
+User.post("/group/owner", checkUserMiddleware , group.ownerGroup);
 User.post("/group/join", checkUserMiddleware , group.joinAGroup);
 User.delete("/group/end", checkUserMiddleware , group.endGroup);
 User.patch("/user/redeem", checkUserMiddleware , group.redeem);

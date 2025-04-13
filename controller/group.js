@@ -559,6 +559,40 @@ const redeem = async (req, res) => {
     }
 }
 
+const ownerGroup = async (req, res) => {
+    try {
+
+        const user = req.user;
+
+        const allUsersGroup = await Model.group.find({
+            userId: user._id,
+            status: {
+                $in: ["waiting", "active"],
+            },
+        });
+
+        if (allUsersGroup.length === 0) {
+            return res.status(404).json({
+                status: "error",
+                message: "No created groups found"
+            });
+        }
+
+        res.status(200).json({
+            status: "success",
+            message: "Groups fetched successfully",
+            groups: allUsersGroup
+        });
+        
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            message: "Internal server error"
+        });
+    }
+};
+
+
 module.exports = {
     createGroup,
     getAllGroups,
@@ -567,4 +601,5 @@ module.exports = {
     activeGroup,
     endGroup,
     redeem,
+    ownerGroup,
 }
