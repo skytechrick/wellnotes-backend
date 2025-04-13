@@ -98,15 +98,82 @@ const getAllUsersGroups = async (req, res) => {
         }
         );
 
-        // console.log(members);
-
         if (!members) {
             return res.status(404).json({
                 status: "error",
                 message: "No groups found"
             });
         }
+
+        const currentStrike = user.strike;
+
+        const currentDate = new Date();
+        const A = [];
         
+        members.forEach(group => {
+            
+
+            if(group.status === "active") {
+                // console.log(group);
+
+                const d = new Date(currentDate).toISOString().split('T')[0];
+                
+                const t = new Date(group.startingDate).toISOString().split('T')[0];
+                
+                const dateDiff = ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24)) === 0? 1 : ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24));
+                
+                
+                // group.groupStrike = dateDiff>= currentStrike? currentStrike: dateDiff;
+                // group.totalDays = dateDiff;
+
+                A.push({
+                    ...group.toObject?.() ?? group,
+                    groupStrike: currentStrike > 0 ? Math.min(currentStrike, dateDiff) : 0,
+                    totalDays: dateDiff
+                })
+                
+
+                /* 
+
+                    case 1: 
+                            when s is 10
+                            when d is 5
+                            then groupStrike = 5
+                    case 2: 
+                            when s is 10
+                            when d is 15
+                            then groupStrike = 10
+                    case 3: 
+                            when s is 10
+                            when d is 1
+                            then groupStrike = 1
+                    case 4: 
+                            when s is 0
+                            when d is 5
+                            then groupStrike = 0
+                    case 5: 
+                            when s is 5
+                            when d is 5
+                            then groupStrike = 5
+                
+                */
+
+            }else{
+
+                A.push({
+                    ...group.toObject?.() ?? group,
+                    groupStrike: 0,
+                    totalDays: 0
+                });
+            }
+            
+        })
+        
+
+
+        
+        
+
         if (!groups) {
             return res.status(404).json({
                 status: "error",
@@ -116,7 +183,7 @@ const getAllUsersGroups = async (req, res) => {
         res.status(200).json({
             status: "success",
             message: "Groups fetched successfully",
-            groups: members,
+            groups: A,
         });
     } catch (err) {
         console.error(err);
@@ -239,6 +306,7 @@ const activeGroup = async (req, res) => {
         const updatedGroup = await Model.group.findByIdAndUpdate(
             groupId,
             {
+                startingDate: new Date(),
                 status: "active",
             },
             { new: true }
@@ -258,10 +326,168 @@ const activeGroup = async (req, res) => {
     }
 }
 
+const endGroup = async (req, res) => {
+    try {
+        const user = req.user;
+        const { groupId } = req.body;
+
+        if (!groupId) {
+            return res.status(400).json({
+                status: "error",
+                message: "Please provide groupId"
+            });
+        }
+
+        const isExist = await Model.group.findOne({
+            _id: groupId,
+            userId: user._id,
+            status: "active",
+        }).populate("members").exec();
+
+        if (!isExist) {
+            return res.status(404).json({
+                status: "error",
+                message: "Group with status active created by you is not found"
+            });
+        }
+    
+        const group = isExist;
+
+        if(group.status !== "active") {
+            
+            return res.status(400).json({
+                status: "error",
+                message: "Group is not active"
+            });
+        }
+
+        const d = new Date().toISOString().split('T')[0];
+        
+        const t = new Date(group.startingDate).toISOString().split('T')[0];
+        
+        const dateDiff = ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24)) === 0? 1 : ((new Date(d) - new Date(t)) / (1000 * 60 * 60 * 24));
+        
+        console.log(dateDiff)
+        
+        // group.groupStrike = dateDiff>= currentStrike? currentStrike: dateDiff;
+        // group.totalDays = dateDiff;
+
+
+        const allMembers = group.members;
+
+    
+        
+
+        let gt = [];
+
+
+        // console.log(allMembers);
+
+        allMembers.forEach( member => {
+
+            const user = member._id;
+            const userStrike = member.strike;
+
+            if(userStrike > 0) {
+                const userGroupStrike = Math.min(userStrike, dateDiff);
+                gt.push({
+                    ...member.toObject?.() ?? member,
+                    userGroupStrike,
+                });
+            }else{
+                gt.push({
+                    ...member,
+                    userGroupStrike: 0,
+                });
+            }
+
+        });
+
+        
+        let sortedMembers = gt.sort((a, b) => {
+            return b.userGroupStrike - a.userGroupStrike;
+        });
+
+        // console.log(sortedMembers);
+        
+        
+        
+        let winners = [];
+        let strikeRanks = new Set();
+        
+        for (let member of sortedMembers) {
+            
+            strikeRanks.add(member.userGroupStrike);
+            
+            winners.push(member);
+            
+            if (strikeRanks.size === 3) break;
+        }
+        
+        
+        const totalMembers = sortedMembers.length;
+        const totalAmount = group.stakeAmount * totalMembers;
+        
+        const totalWinners = winners.length;
+        const totalWinnersAmount = totalAmount / totalWinners;
+
+
+        const winnersWithAmountPromise = winners.map(async (winner) => {
+
+            await Model.Users.findByIdAndUpdate(
+                winner._id,
+                {
+                    Tokens_Earned: winner.Tokens_Earned + totalWinnersAmount,
+                    $pull: { groups: groupId },
+                    $push: {
+                        Journals: {
+                            ID: new Date().getTime(),
+                            Title: "Group Ended",
+                            Description: `You have earned ${totalWinnersAmount} tokens from group ${group.name}`,
+                        },
+                    },
+                },
+                { new: true }
+            );
+
+            return {
+                winnerId: winner._id,
+                Tokens_Earned: totalWinnersAmount,
+            };
+        });
+
+        const winnersWithAmount = await Promise.all(winnersWithAmountPromise);
+
+        const updatedGroup = await Model.group.findByIdAndUpdate(
+            groupId,
+            {
+                status: "closed",
+                winners: winnersWithAmount,
+                members: [],
+            },
+            { new: true }
+        );
+
+        res.status(200).json({
+            status: "success",
+            message: "Group ended successfully",
+            group: updatedGroup,
+            winners: winnersWithAmount,
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            message: "Internal server error"
+        });
+    }
+}
+
 module.exports = {
     createGroup,
     getAllGroups,
     getAllUsersGroups,
     joinAGroup,
     activeGroup,
+    endGroup,
 }

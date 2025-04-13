@@ -232,8 +232,26 @@ User.post("/new_journal", async (req, res) => {
                     const currentCheck = new Date().toISOString().split('T')[0]
                     
                     const lastCheck = CheckedUser.lastStrike;
-                    if (new Date(lastCheck) > new Date(currentCheck)) {
-                        currentStrike = 0;
+
+                    // console.log(new Date(lastCheck),"_____" , new Date(currentCheck));
+                    // console.log(new Date(lastCheck).getTime() === new Date(currentCheck).getTime());
+
+                    if (new Date(lastCheck).getTime() === new Date(currentCheck).getTime()) {
+                        currentStrike = CheckedUser.strike;
+
+                    } else if (new Date(lastCheck).getTime() < new Date(currentCheck).getTime()) {
+                        let da = new Date(lastCheck)
+                        da.setDate(da.getDate() - 1);
+                        let pa = new Date(currentCheck);
+                        pa.setDate(pa.getDate() - 1);
+                        if (da.getTime() === pa.getTime()) {
+                            console.log("____", new Date(lastCheck).getTime(), new Date(currentCheck).getTime());
+                            currentStrike = CheckedUser.strike-1;
+                        }else{
+                            currentStrike = 0;
+                        }
+                    }else{
+                        currentStrike = CheckedUser.strike-1;
                     }
 
                     await Users.updateOne({_id: CheckedUser._id}, {
@@ -556,3 +574,4 @@ User.post("/group/all", checkUserMiddleware , group.getAllGroups);
 User.post("/group/users", checkUserMiddleware , group.getAllUsersGroups);
 User.post("/group/active", checkUserMiddleware , group.activeGroup);
 User.post("/group/join", checkUserMiddleware , group.joinAGroup);
+User.delete("/group/end", checkUserMiddleware , group.endGroup);

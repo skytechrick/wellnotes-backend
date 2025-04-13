@@ -98,6 +98,18 @@ const groupSchema = new Schema({
         type: String,
         default: "waiting"
     },
+    winners: [
+        {
+            winnerId: {
+                type: String,
+                required: true,
+            },
+            Tokens_Earned: {
+                type: Number,
+                required: true
+            }
+        }
+    ],
     userId: {
         type: String,
         required: true,
@@ -111,6 +123,10 @@ const groupSchema = new Schema({
     duration: {
         type: Number,
         required: true
+    },
+    startingDate: {
+        type: Date,
+        default: new Date,
     },
     stakeAmount: {
         type: Number,
