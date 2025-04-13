@@ -376,8 +376,6 @@ const endGroup = async (req, res) => {
         const allMembers = group.members;
 
 
-
-
         let gt = [];
 
 
@@ -396,13 +394,14 @@ const endGroup = async (req, res) => {
                 });
             } else {
                 gt.push({
-                    ...member,
+                    ...member.toObject?.() ?? member,
                     userGroupStrike: 0,
                 });
             }
 
         });
 
+        // console.log(gt);
 
         let sortedMembers = gt.sort((a, b) => {
             return b.userGroupStrike - a.userGroupStrike;
@@ -432,12 +431,15 @@ const endGroup = async (req, res) => {
         const totalWinnersAmount = totalAmount / totalWinners;
 
 
+        // console.log("winners");
+        // console.log(winners);
+        // console.log("winners");
         const winnersWithAmountPromise = winners.map(async (winner) => {
 
             await Model.Users.findByIdAndUpdate(
                 winner._id,
                 {
-                    Tokens_Earned: winner.Tokens_Earned + totalWinnersAmount,
+                    Tokens_Earned: parseInt(winner.Tokens_Earned + totalWinnersAmount),
                     $pull: { groups: groupId },
                     $push: {
                         Journals: {
@@ -476,6 +478,8 @@ const endGroup = async (req, res) => {
         });
 
     } catch (error) {
+        // console.log("error");
+        // console.log(error);
         return res.status(500).json({
             status: "error",
             message: "Internal server error"
